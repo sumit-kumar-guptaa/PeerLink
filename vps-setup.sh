@@ -111,6 +111,10 @@ fi
 echo "Starting PeerLink Backend with PM2..."
 pm2 start --name peerlink-backend java -- -jar target/PeerLink-0.0.1-SNAPSHOT.jar
 
+# Ensure all dependencies are in the classpath
+CLASSPATH="target/p2p-1.0-SNAPSHOT.jar:$(mvn dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=/dev/stdout -q)"
+pm2 start --name peerlink-backend java -- -cp "$CLASSPATH" p2p.App
+
 # Start the frontend using PM2
 echo "Starting PeerLink Frontend with PM2..."
 cd UI
