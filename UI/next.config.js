@@ -2,9 +2,19 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+  async redirects() {
+    return [
+      {
+        source: '/api/upload',
+        destination: 'http://localhost:8080/upload',
+        permanent: true,
+      },
+      {
+        source: '/api/download/:port',
+        destination: 'http://localhost:8080/download/:port',
+      },
+    ];
   },
-};
+}
 
 module.exports = nextConfig;
