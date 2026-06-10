@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import { Download, AlertCircle, CheckCircle, Loader, Globe } from 'lucide-react';
 import { API_ENDPOINTS } from './api/config';
+import Link from 'next/link';
 
 export default function DownloadByPort() {
   const [portInput, setPortInput] = useState('');
@@ -184,10 +185,13 @@ export default function DownloadByPort() {
 
         {/* Navigation */}
         <div className="mt-8 text-center">
-          <a href="/" className="inline-block px-6 py-2 text-blue-600 hover:text-blue-800 font-semibold">
-            ← Back to Uploads
-          </a>
-        </div>
+  <Link
+    href="/"
+    className="inline-block px-6 py-2 text-blue-600 hover:text-blue-800 font-semibold"
+  >
+    ← Back to Uploads
+  </Link>
+</div>
       </main>
     </div>
   );
