@@ -12,6 +12,7 @@ const nextConfig = {
       {
         source: '/api/download/:port',
         destination: 'http://localhost:8080/download/:port',
+        permanent: true,
       },
     ];
   },
