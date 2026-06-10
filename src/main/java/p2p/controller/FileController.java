@@ -1,20 +1,23 @@
 package p2p.controller;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.Headers;
+
+import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
+
+import java.io.FileOutputStream;
+import java.net.Socket;
+import java.io.InputStream;
+import java.io.FileInputStream;
+import javax.sound.sampled.Port;
 
 import p2p.service.FileSharer;
 
@@ -104,12 +107,10 @@ public class FileController {
                 String  boundary = contentType.substring(contentType.indexOf("boundary=") + 9);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-                try (InputStream is = exchange.getRequestBody()) {
-                    byte[] buffer = new byte[8192];
-                    int read;
-                    while ((read = is.read(buffer)) != -1) {
-                        baos.write(buffer, 0, read);
-                    }
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = exchange.getRequestBody().read(buffer)) != -1) {
+                    baos.write(buffer, 0, bytesRead);
                 }
                 byte[] requestData = baos.toByteArray();
 

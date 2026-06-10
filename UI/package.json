@@ -1,0 +1,27 @@
+{
+  "name": "peerlink-frontend",
+  "version": "1.0.0",
+  "description": "Modern Next.js frontend for PeerLink P2P file sharing",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "next": "^14.1.0",
+    "axios": "^1.6.8",
+    "lucide-react": "^0.344.0",
+    "classnames": "^2.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.1.0",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1"
+  }
+}
