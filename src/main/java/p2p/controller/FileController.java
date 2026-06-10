@@ -1,18 +1,20 @@
 package p2p.controller;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.Headers;
-import java.io.OutputStream;
-import java.io.ByteArrayOutputStream;
-import org.apache.commons.io.IOUtils;
-import java.io.FileOutputStream;
+import com.sun.net.httpserver.HttpServer;
 
 import p2p.service.FileSharer;
 
@@ -34,9 +36,9 @@ public class FileController {
             uploadDirFile.mkdirs();
         }
 
-        server.CreateContext("/upload", new UploadHandler());
-        server.CreateContext("/download", new DownloadHandler());
-        server.CreateContext("/", new CORSHandler());
+        server.createContext("/upload", new UploadHandler());
+        server.createContext("/download", new DownloadHandler());
+        server.createContext("/", new CORSHandler());
         server.setExecutor(executorService);
 
     }
@@ -102,7 +104,13 @@ public class FileController {
                 String  boundary = contentType.substring(contentType.indexOf("boundary=") + 9);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-                IOUtils.copy(exchange.getRequestBody(), baos);
+                try (InputStream is = exchange.getRequestBody()) {
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = is.read(buffer)) != -1) {
+                        baos.write(buffer, 0, read);
+                    }
+                }
                 byte[] requestData = baos.toByteArray();
 
                 Multiparser parser = new Multiparser(requestData, boundary);
@@ -234,9 +242,77 @@ public class FileController {
     }
 }
 
+    private class DownloadHandler implements com.sun.net.httpserver.HttpHandler {
+        @Override
+        public void handle(com.sun.net.httpserver.HttpExchange exchange) throws IOException {
+            Headers headers = exchange.getResponseHeaders();
+            headers.add("Access-Control-Allow-Origin", "*");
+
+            if(!exchange.getRequestMethod().equalsIgnoreCase("GET")) {
+                String response = "Method Not Allowed";
+                exchange.sendResponseHeaders(405, response.getBytes().length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                }
+                return;
+            }
+
+            String path = exchange.getRequestURI().getPath();
+            String portStr = path.substring(path.lastIndexOf("/") + 1);
+            try {
+                int port = Integer.parseInt(portStr);
+
+                try (Socket socket = new Socket("localhost", port)) {
+                     InputStream is = socket.getInputStream();
+                     File tempFile = File.createTempFile("download-", ".tmp");
+                     String fileName = "downloaded-file";
+                    try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                         byte[] buffer = new byte[4096];
+                         int bytesRead;
+                         ByteArrayOutputStream HeaderBaos = new ByteArrayOutputStream();
+                         int b;
+                         while((b = is.read()) != -1) {
+                             if (b == '\n') break;
+                             HeaderBaos.write(b);
+                         }
+                         String header = HeaderBaos.toString();
+                         if (header.startsWith("FILENAME:")) {
+                             if (header.startsWith("Filename: ")) {
+                                    fileName = header.substring("Filename: ".length());
+                                }
+                         }
+                         while((bytesRead = is.read(buffer)) != -1) {
+                             fos.write(buffer, 0, bytesRead);
+                         }
+
+                         headers.add("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+                         headers.add("Content-Type", "application/octet-stream");
+                         exchange.sendResponseHeaders(200, tempFile.length());
+                         try (OutputStream os = exchange.getResponseBody()){
+                              FileInputStream fis = new FileInputStream(tempFile);
+                              byte[] fileBuffer = new byte[4096];
+                              int fileBytesRead;
+                              while((fileBytesRead = fis.read(fileBuffer)) != -1) {
+                                  os.write(fileBuffer, 0, fileBytesRead);
+                              }
+                         }
+                         tempFile.delete();
+                    }
+
+                }
 
 
+                
+            } catch (Exception ex) {
+                System.err.println("Error downloading the file: " + ex.getMessage());
+                String response = "Error downloading the file: " + ex.getMessage();
+                headers.add("Content-Type", "text/plain");
+                exchange.sendResponseHeaders(400, response.getBytes().length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                }
+            }
+        }
 
-
-
+    }
 }
